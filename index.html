@@ -1140,15 +1140,68 @@ function historyClicks(ev){
 }
 
 /* ---------- backup ---------- */
-function exportBackup(){
+function markBackedUp(){ state.lastBackupAt=Date.now(); saveNow(); }
+function backupAgo(){
+  if(!state.lastBackupAt) return 'never';
+  const diff=Date.now()-state.lastBackupAt;
+  const days=Math.floor(diff/86400000);
+  if(days>=1) return days===1?'1 day ago':days+' days ago';
+  const hrs=Math.floor(diff/3600000);
+  if(hrs>=1) return hrs===1?'1 hour ago':hrs+' hours ago';
+  const mins=Math.floor(diff/60000);
+  if(mins>=1) return mins===1?'1 minute ago':mins+' minutes ago';
+  return 'just now';
+}
+async function exportBackup(){
   const stamp=new Date().toISOString().slice(0,10);
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`ledger-backup-${stamp}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-  toast('Backup file created');
+  const json=JSON.stringify(state,null,2);
+  const fname=`ledger-backup-${stamp}.json`;
+  // Best on iPhone: the share sheet, which offers Save to Files
+  try{
+    if(navigator.canShare){
+      const file=new File([json],fname,{type:'application/json'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Ledger backup'});
+        markBackedUp(); toast('Backup shared — pick Save to Files');
+        return;
+      }
+    }
+  }catch(e){
+    if(e&&e.name==='AbortError') return;   // user closed the share sheet
+    // any other error: fall through to the download path below
+  }
+  try{
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    markBackedUp(); toast('Backup file created');
+    return;
+  }catch(e){}
+  showBackupText(json);   // last resort: copy by hand
+}
+function showBackupText(json){
+  openSheet('Backup',`
+    <div class="note">This device wouldn't open a save dialog, so copy everything below and keep it somewhere safe — a note, or a file in iCloud. To restore later, put it in a .json file and use Restore.</div>
+    <textarea class="search" style="height:200px;font-family:monospace;font-size:11px;line-height:1.4" readonly>${esc(json)}</textarea>`);
+  markBackedUp();
+}
+function openBackup(){
+  openSheet('Backup & restore',`
+    <div class="tlist" style="margin-bottom:14px">
+      <div class="trow"><span class="s">Sessions logged</span><span class="v data">${state.history.length}</span></div>
+      <div class="trow"><span class="s">Last backup</span><span class="v data">${esc(backupAgo())}</span></div>
+    </div>
+    <button class="cardio-log" data-act="export">Save a backup file</button>
+    <button class="menu-item" data-act="import">Restore from a file</button>
+    <div class="note">On your iPhone, <b>Save a backup</b> opens the share sheet — choose <b>Save to Files</b> to keep it in iCloud. <b>Restore</b> replaces everything in Ledger with the file you pick. Remember: your data already survives normal app updates on its own — this is just insurance for a reinstall.</div>`);
+  $('#sheetBody').onclick=ev=>{
+    const b=ev.target.closest('[data-act]'); if(!b) return;
+    if(b.dataset.act==='export') exportBackup();
+    if(b.dataset.act==='import') $('#importFile').click();
+  };
 }
 $('#importFile').onchange=ev=>{
   const f=ev.target.files&&ev.target.files[0];
@@ -1393,6 +1446,7 @@ $('#btnMenu').onclick=()=>{
       and leaves your progression untouched, so nothing is lost.</div>
     <button class="menu-item" data-act="storage">Storage status</button>
     <button class="menu-item" data-act="library">Exercise library</button>
+    <button class="menu-item" data-act="backup">Backup &amp; restore</button>
     <button class="menu-item" data-act="rename">Rename this day</button>
     <button class="menu-item" data-act="addday">Add a day to the rotation</button>
     <button class="menu-item" data-act="delday">Remove this day</button>
@@ -1404,6 +1458,7 @@ $('#btnMenu').onclick=()=>{
 
     if(a==='storage'){ openStorage(); return; }
     if(a==='library'){ openPicker(); return; }
+    if(a==='backup'){ openBackup(); return; }
 
     if(a==='rename'){
       const d=day();
