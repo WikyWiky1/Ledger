@@ -169,6 +169,8 @@ body.deloadWk .field input::placeholder{color:#6B5A22;}
 .sess-top .vol{font-family:'Barlow Semi Condensed',sans-serif;font-size:11.5px;
   letter-spacing:.06em;color:var(--muted);border:1px solid var(--line);
   border-radius:4px;padding:1px 6px;}
+.sess-del{flex:none;width:22px;color:var(--dim);font-size:18px;line-height:1;text-align:center;}
+.sess-del:active{color:#C98080;}
 .stats{display:flex;gap:8px;margin-bottom:16px;}
 .stat{flex:1;background:var(--surface-2);border:1px solid var(--line);
   border-radius:8px;padding:10px;}
@@ -1059,8 +1061,10 @@ $('#btnHistory').onclick=()=>{
     weeks.push({t, list:(groups.get(t)||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date))});
   }
 
+  const curWk=calWeekStart(new Date()).getTime();
   const html=weeks.map((w,gi)=>{
     const ws=new Date(w.t), we=new Date(w.t); we.setDate(we.getDate()+6);
+    const editable=w.t===curWk;
     const n=w.list.length;
     if(!n) return `
       <div class="wk blank">
@@ -1089,6 +1093,7 @@ $('#btnHistory').onclick=()=>{
               <span class="t">${esc(s.day)}</span>
               ${sv?`<span class="vol data">${fmtVol(sv)} lb</span>`:''}
               <span class="d">${esc(fmtDay(s.date))} · ${esc(fmtShort(s.date))}</span>
+              ${editable?`<button class="sess-del" data-delsess="${esc(s.date)}" aria-label="Delete session">×</button>`:''}
             </div>
             <div class="sess-body">
               ${s.ex.map(e=>`<em>${esc(e.name)}</em> — ${e.sets.map(x=>`${esc(x.w||'—')}×${esc(x.r||'—')}`).join(', ')}`).join('<br>')}
@@ -1106,6 +1111,25 @@ function historyClicks(ev){
   if(a){
     if(a.dataset.act==='export') exportBackup();
     if(a.dataset.act==='import') $('#importFile').click();
+    return;
+  }
+  const del=ev.target.closest('[data-delsess]');
+  if(del){
+    ev.stopPropagation();
+    const date=del.dataset.delsess;
+    const curWk=calWeekStart(new Date()).getTime();
+    const h=state.history.find(x=>x.date===date);
+    if(!h) return;
+    if(calWeekStart(h.date).getTime()!==curWk){ toast('Locked — past weeks stay put'); return; }
+    askYes('Delete session',
+      `Remove the ${h.day} session from ${fmtShort(h.date)}? This clears the history entry only — it doesn't roll back any weight targets. Re-log the day and finish again to reset those. This can't be undone.`,
+      'Delete').then(yes=>{
+        if(!yes) return;
+        state.history=state.history.filter(x=>x.date!==date);
+        saveNow();
+        $('#btnHistory').onclick();
+        toast('Session deleted');
+      });
     return;
   }
   const b=ev.target.closest('[data-wk]'); if(!b) return;
