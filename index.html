@@ -318,18 +318,39 @@ body.theme-nintendo .node:nth-child(1).current::after{background:#E60012;}
 body.theme-nintendo .node:nth-child(2).current::after{background:#F5C518;}
 body.theme-nintendo .node:nth-child(3).current::after{background:#3BA935;}
 body.theme-nintendo .node:nth-child(4).current::after{background:#0087C9;}
+/* candy: each set row cycles the N64 colors R, Y, G, B */
+body.theme-nintendo .set:nth-child(4n+1){--setc:#E60012;}
+body.theme-nintendo .set:nth-child(4n+2){--setc:#F5C518;}
+body.theme-nintendo .set:nth-child(4n+3){--setc:#3BA935;}
+body.theme-nintendo .set:nth-child(4n+4){--setc:#0087C9;}
+body.theme-nintendo .set .n{color:var(--setc);font-weight:600;}
+body.theme-nintendo .set .field input::placeholder{color:var(--setc);opacity:.85;}
+body.theme-nintendo .set .field:focus-within{border-color:var(--setc);}
+body.theme-nintendo .set.done .chk{background:var(--setc);border-color:var(--setc);color:#0E1113;}
 /* --- GamerTool starfield --- */
 main{position:relative;z-index:1;}
 #stars{display:none;position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
 body.theme-gamertool #stars{display:block;}
-.star-layer{position:absolute;left:0;top:0;width:100%;height:200%;will-change:transform;}
-.star-layer.far{animation:starDrift 70s linear infinite;}
-.star-layer.near{animation:starDrift 40s linear infinite;}
+.star-layer{position:absolute;left:0;top:0;width:200%;height:100%;will-change:transform;}
+.star-layer.far{animation:starDrift 85s linear infinite;}
+.star-layer.near{animation:starDrift 50s linear infinite;}
 .star{position:absolute;border-radius:50%;background:#e9eff7;
   box-shadow:0 0 4px 1px rgba(190,208,235,.55);opacity:var(--o,.8);
   animation-name:twinkle;animation-iteration-count:infinite;animation-timing-function:ease-in-out;}
-@keyframes starDrift{from{transform:translate3d(0,0,0);}to{transform:translate3d(0,-100vh,0);}}
+@keyframes starDrift{from{transform:translate3d(-100vw,0,0);}to{transform:translate3d(0,0,0);}}
 @keyframes twinkle{0%,100%{opacity:calc(var(--o,.8)*.28);transform:scale(.7);}50%{opacity:var(--o,.8);transform:scale(1.05);}}
+.comet{position:absolute;top:0;left:0;width:3px;height:3px;border-radius:50%;background:#fff;
+  box-shadow:0 0 9px 2px rgba(180,210,255,.9);opacity:0;z-index:1;pointer-events:none;
+  transform:rotate(var(--ang,0deg)) translateX(0);
+  animation:cometFly var(--dur,2s) linear forwards;}
+.comet::before{content:"";position:absolute;right:3px;top:50%;transform:translateY(-50%);
+  width:94px;height:2px;border-radius:2px;
+  background:linear-gradient(to left,rgba(205,224,255,.95),rgba(205,224,255,0));}
+@keyframes cometFly{
+  0%{transform:rotate(var(--ang,0deg)) translateX(0);opacity:0;}
+  8%{opacity:1;}
+  90%{opacity:1;}
+  100%{transform:rotate(var(--ang,0deg)) translateX(var(--dist,120vw));opacity:0;}}
 /* under GamerTool the exercise panes go translucent so the stars show through */
 body.theme-gamertool .ex{background:rgba(18,22,36,.55);}
 body.theme-gamertool .newbase,body.theme-gamertool .goalbar{backdrop-filter:none;}
@@ -1148,8 +1169,9 @@ const backupRow=`
   </div>`;
 
 $('#btnHistory').onclick=()=>{
-  if(!state.history.length){
-    openSheet('History',backupRow+'<div class="empty">No sessions logged yet.</div>');
+  const cardioAll=Array.isArray(state.cardio)?state.cardio:[];
+  if(!state.history.length&&!cardioAll.length){
+    openSheet('History',backupRow+'<div class="empty">Nothing logged yet.</div>');
     $('#sheetBody').onclick=historyClicks;
     return;
   }
@@ -1159,20 +1181,28 @@ $('#btnHistory').onclick=()=>{
     if(!groups.has(k)) groups.set(k,[]);
     groups.get(k).push(h);
   });
+  const cgroups=new Map();
+  cardioAll.forEach(c=>{
+    const k=calWeekStart(c.date).getTime();
+    if(!cgroups.has(k)) cgroups.set(k,[]);
+    cgroups.get(k).push(c);
+  });
 
   // walk every week from this one back to the oldest, so blank weeks show up too
-  const oldest=Math.min(...groups.keys());
+  const oldest=Math.min(...groups.keys(),...cgroups.keys());
   const weeks=[];
   for(let t=calWeekStart(new Date()).getTime(); t>=oldest; t-=604800000){
-    weeks.push({t, list:(groups.get(t)||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date))});
+    weeks.push({t,
+      list:(groups.get(t)||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)),
+      cardio:(cgroups.get(t)||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date))});
   }
 
   const curWk=calWeekStart(new Date()).getTime();
   const html=weeks.map((w,gi)=>{
     const ws=new Date(w.t), we=new Date(w.t); we.setDate(we.getDate()+6);
     const editable=w.t===curWk;
-    const n=w.list.length;
-    if(!n) return `
+    const n=w.list.length, cn=w.cardio.length;
+    if(!n&&!cn) return `
       <div class="wk blank">
         <div class="wk-head">
           <span class="rng data">${fmtNum(ws)} – ${fmtNum(we)}</span>
@@ -1182,11 +1212,17 @@ $('#btnHistory').onclick=()=>{
     const dl=w.list.some(s=>s.deload);
     const open=gi===0;
     const wvol=w.list.reduce((a,s)=>a+sessionVolume(s),0);
+    const cmin=w.cardio.reduce((a,c)=>a+(parseFloat(c.min)||0),0);
+    const cnt=[];
+    if(n) cnt.push(n+' SESSION'+(n>1?'S':''));
+    if(dl) cnt.push('DELOAD');
+    if(wvol) cnt.push(fmtVol(wvol)+' LB');
+    if(cn) cnt.push(cn+' CARDIO');
     return `
     <div class="wk ${dl?'deload':''}">
       <button class="wk-head" data-wk="${gi}">
         <span class="rng data">${fmtNum(ws)} – ${fmtNum(we)}</span>
-        <span class="cnt">${n} SESSION${n>1?'S':''}${dl?' · DELOAD':''}${wvol?' · '+fmtVol(wvol)+' LB':''}</span>
+        <span class="cnt">${cnt.join(' · ')}</span>
         <span class="chips">${w.list.map(s=>`<b>${esc(s.day)}</b>`).join('')}</span>
         <span class="car" data-car="${gi}">${open?'▴':'▾'}</span>
       </button>
@@ -1205,6 +1241,22 @@ $('#btnHistory').onclick=()=>{
               ${s.ex.map(e=>`<em>${esc(e.name)}</em> — ${e.sets.map(x=>`${esc(x.w||'—')}×${esc(x.r||'—')}`).join(', ')}`).join('<br>')}
             </div>
           </div>`;}).join('')}
+        ${cn?`
+          <div class="sess">
+            <div class="sess-top">
+              <span class="t">Cardio</span>
+              <span class="vol data">${Math.round(cmin)} min</span>
+              <span class="d">${cn} session${cn>1?'s':''}</span>
+            </div>
+            <div class="sess-body">
+              ${w.cardio.map(c=>{
+                const bits=[(c.type||'Walk'),num(c.min)+' min'];
+                if(c.speed!==''&&c.speed!=null) bits.push(num(c.speed)+' mph');
+                if(c.incline!==''&&c.incline!=null) bits.push(num(c.incline)+'%');
+                return `<em>${esc(fmtShort(c.date))}</em> — ${esc(bits.join(' · '))}`;
+              }).join('<br>')}
+            </div>
+          </div>`:''}
       </div>
     </div>`;
   }).join('');
@@ -1633,17 +1685,45 @@ function buildStars(){
     layer.className='star-layer '+cls;
     let html='';
     for(let i=0;i<count;i++){
-      const x=(Math.random()*100).toFixed(2), y=(Math.random()*50).toFixed(2);
+      const x=(Math.random()*50).toFixed(2), y=(Math.random()*100).toFixed(2);
       const sz=((cls==='near'?1.5:0.9)+Math.random()*1.1).toFixed(2);
       const d=(Math.random()*6).toFixed(2), dur=(3+Math.random()*4).toFixed(2), op=(0.5+Math.random()*0.5).toFixed(2);
-      const st=`left:${x}%;width:${sz}px;height:${sz}px;--o:${op};animation-delay:${d}s;animation-duration:${dur}s`;
-      html+=`<span class="star" style="${st};top:${y}%"></span>`;
-      html+=`<span class="star" style="${st};top:${(+y+50).toFixed(2)}%"></span>`;
+      const st=`top:${y}%;width:${sz}px;height:${sz}px;--o:${op};animation-delay:${d}s;animation-duration:${dur}s`;
+      html+=`<span class="star" style="${st};left:${x}%"></span>`;
+      html+=`<span class="star" style="${st};left:${(+x+50).toFixed(2)}%"></span>`;
     }
     layer.innerHTML=html;
     wrap.appendChild(layer);
   });
   wrap.dataset.built='1';
+}
+/* RNG comet — random direction, every 10–120s, GamerTool only */
+let cometTimer=null;
+function scheduleComet(){
+  clearTimeout(cometTimer);
+  cometTimer=setTimeout(launchComet,(10+Math.random()*110)*1000);
+}
+function launchComet(){
+  scheduleComet();                       // always queue the next one
+  const wrap=document.getElementById('stars');
+  if(!wrap||!document.body.classList.contains('theme-gamertool')) return;
+  const W=window.innerWidth||360, H=window.innerHeight||640, m=140;
+  const starts=[
+    {x:-m,y:Math.random()*H},{x:W+m,y:Math.random()*H},
+    {x:Math.random()*W,y:-m},{x:Math.random()*W,y:H+m}
+  ];
+  const s=starts[Math.floor(Math.random()*starts.length)];
+  const vx=(Math.random()*W-s.x)*2.2, vy=(Math.random()*H-s.y)*2.2;
+  const dist=Math.sqrt(vx*vx+vy*vy), ang=Math.atan2(vy,vx)*180/Math.PI;
+  const dur=(1.1+Math.random()*1.7).toFixed(2);
+  const c=document.createElement('div');
+  c.className='comet';
+  c.style.left=s.x+'px'; c.style.top=s.y+'px';
+  c.style.setProperty('--ang',ang+'deg');
+  c.style.setProperty('--dist',dist+'px');
+  c.style.setProperty('--dur',dur+'s');
+  wrap.appendChild(c);
+  setTimeout(()=>c.remove(),(+dur)*1000+500);
 }
 
 function applyAppearance(){
@@ -1893,6 +1973,7 @@ $('#btnMenu').onclick=openOptions;
   syncLibrary();
   promotePending();
   applyAppearance();
+  scheduleComet();
   render();
   saveNow();
 
