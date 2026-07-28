@@ -301,37 +301,40 @@ body.theme-nintendo .chk,body.theme-nintendo .cchip,body.theme-nintendo .swatch,
 body.theme-nintendo .pill,body.theme-nintendo .tgt,body.theme-nintendo .cardio-log{border-radius:14px;}
 body.theme-nintendo .wordmark{letter-spacing:.1em;}
 body.theme-nintendo .session-title{letter-spacing:.02em;}
+/* N64 controller colors: green Finish, red Clear, and R/Y/G/B day headers */
+body.theme-nintendo .primary{background:#3BA935;color:#0E1113;}
+body.theme-nintendo .primary:active{background:#2E8829;}
+body.theme-nintendo .ghost{background:#E60012;border-color:#E60012;color:#FFFFFF;}
+body.theme-nintendo .ghost:active{background:#B7000E;}
+body.theme-nintendo .node:nth-child(1) .idx{color:#E60012;}
+body.theme-nintendo .node:nth-child(2) .idx{color:#F5C518;}
+body.theme-nintendo .node:nth-child(3) .idx{color:#3BA935;}
+body.theme-nintendo .node:nth-child(4) .idx{color:#0087C9;}
+body.theme-nintendo .node:nth-child(1).current{border-color:#E60012;}
+body.theme-nintendo .node:nth-child(2).current{border-color:#F5C518;}
+body.theme-nintendo .node:nth-child(3).current{border-color:#3BA935;}
+body.theme-nintendo .node:nth-child(4).current{border-color:#0087C9;}
+body.theme-nintendo .node:nth-child(1).current::after{background:#E60012;}
+body.theme-nintendo .node:nth-child(2).current::after{background:#F5C518;}
+body.theme-nintendo .node:nth-child(3).current::after{background:#3BA935;}
+body.theme-nintendo .node:nth-child(4).current::after{background:#0087C9;}
 /* --- GamerTool starfield --- */
 main{position:relative;z-index:1;}
 #stars{display:none;position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
 body.theme-gamertool #stars{display:block;}
-#stars::before,#stars::after{content:"";position:absolute;inset:0;}
-#stars::before{
-  background-image:
-    radial-gradient(1.6px 1.6px at 24px 40px,#dfe6ee,transparent),
-    radial-gradient(1.6px 1.6px at 130px 110px,#c3ccd8,transparent),
-    radial-gradient(1.4px 1.4px at 210px 60px,#ffffff,transparent),
-    radial-gradient(1.5px 1.5px at 80px 190px,#b9c6df,transparent),
-    radial-gradient(1.7px 1.7px at 260px 230px,#e7eef6,transparent),
-    radial-gradient(1.3px 1.3px at 40px 300px,#cdd6e2,transparent),
-    radial-gradient(1.5px 1.5px at 180px 330px,#ffffff,transparent),
-    radial-gradient(1.4px 1.4px at 300px 150px,#aebbd2,transparent);
-  background-size:340px 380px;background-repeat:repeat;opacity:.85;
-  animation:drift1 90s linear infinite;}
-#stars::after{
-  background-image:
-    radial-gradient(1px 1px at 60px 70px,#9fb0c8,transparent),
-    radial-gradient(1px 1px at 150px 30px,#c7d2e2,transparent),
-    radial-gradient(1px 1px at 230px 180px,#8fa0bd,transparent),
-    radial-gradient(1px 1px at 20px 220px,#b6c2d8,transparent),
-    radial-gradient(1px 1px at 190px 260px,#9fb0c8,transparent),
-    radial-gradient(1px 1px at 110px 140px,#d6deeb,transparent);
-  background-size:260px 300px;background-repeat:repeat;opacity:.5;
-  animation:drift2 150s linear infinite;}
-@keyframes drift1{from{background-position:0 0;}to{background-position:0 -380px;}}
-@keyframes drift2{from{background-position:0 0;}to{background-position:0 -300px;}}
+.star-layer{position:absolute;left:0;top:0;width:100%;height:200%;will-change:transform;}
+.star-layer.far{animation:starDrift 70s linear infinite;}
+.star-layer.near{animation:starDrift 40s linear infinite;}
+.star{position:absolute;border-radius:50%;background:#e9eff7;
+  box-shadow:0 0 4px 1px rgba(190,208,235,.55);opacity:var(--o,.8);
+  animation-name:twinkle;animation-iteration-count:infinite;animation-timing-function:ease-in-out;}
+@keyframes starDrift{from{transform:translate3d(0,0,0);}to{transform:translate3d(0,-100vh,0);}}
+@keyframes twinkle{0%,100%{opacity:calc(var(--o,.8)*.28);transform:scale(.7);}50%{opacity:var(--o,.8);transform:scale(1.05);}}
+/* under GamerTool the exercise panes go translucent so the stars show through */
+body.theme-gamertool .ex{background:rgba(18,22,36,.55);}
+body.theme-gamertool .newbase,body.theme-gamertool .goalbar{backdrop-filter:none;}
 body.theme-gamertool .wordmark{letter-spacing:.14em;}
-@media (prefers-reduced-motion:reduce){#stars::before,#stars::after{animation:none;}}
+@media (prefers-reduced-motion:reduce){.star-layer,.star{animation:none!important;}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style>
 </head>
@@ -1582,7 +1585,8 @@ const THEMES={
     '--accent':'#7C83E8','--accent-dim':'#3C4288',
     '--hit':'#79C7A0','--deload':'#D9B84C','--radius':'12px',
     '--header-bg':'rgba(8,10,18,.86)','--scrim':'rgba(4,5,12,.80)'
-  }}
+  }},
+  custom:{ name:'Custom', body:'', vars:DEFAULT_VARS }
 };
 const COLOR_PRESETS=[
   {name:'Slate',accent:'#6E9EC4'}, {name:'Purple',accent:'#9A7BE0'},
@@ -1603,19 +1607,60 @@ function hexToHsl(hex){ const {r,g,b}=hexToRgb(hex), R=r/255,G=g/255,B=b/255;
     switch(mx){case R:h=(G-B)/d+(G<B?6:0);break;case G:h=(B-R)/d+2;break;default:h=(R-G)/d+4;} h/=6;}
   return {h:Math.round(h*360),s:Math.round(s*100),l:Math.round(l*100)}; }
 function darken(hex,amt){const {h,s,l}=hexToHsl(hex);return hslToHex(h,s,Math.max(8,l-amt));}
+function hexToRgba(hex,a){const {r,g,b}=hexToRgb(hex);return `rgba(${r},${g},${b},${a})`;}
+function customThemeVars(hex){
+  const {h,s,l}=hexToHsl(hex);
+  const S=Math.max(30,Math.min(s,72));                 // keep the hue clearly visible
+  const bgL=Math.max(9,Math.min(Math.round(l*0.30),22)); // dark, but tracks the chosen lightness
+  return {
+    '--bg':hslToHex(h,S,bgL),
+    '--surface':hslToHex(h,S,bgL+6),
+    '--surface-2':hslToHex(h,S,bgL+11),
+    '--line':hslToHex(h,Math.max(18,S-10),bgL+20),
+    '--line-soft':hslToHex(h,Math.max(16,S-12),bgL+12),
+    '--text':'#EAECEF','--muted':'#9AA1AB','--dim':'#6E7580',
+    '--accent':hex,'--accent-dim':darken(hex,22),
+    '--hit':'#9CBF6E','--deload':'#C9A227','--radius':'10px',
+    '--header-bg':hexToRgba(hslToHex(h,S,Math.max(6,bgL-2)),.9),
+    '--scrim':hexToRgba(hslToHex(h,S,Math.max(4,bgL-4)),.8)
+  };
+}
+function buildStars(){
+  const wrap=document.getElementById('stars');
+  if(!wrap||wrap.dataset.built) return;
+  [['far',42],['near',26]].forEach(([cls,count])=>{
+    const layer=document.createElement('div');
+    layer.className='star-layer '+cls;
+    let html='';
+    for(let i=0;i<count;i++){
+      const x=(Math.random()*100).toFixed(2), y=(Math.random()*50).toFixed(2);
+      const sz=((cls==='near'?1.5:0.9)+Math.random()*1.1).toFixed(2);
+      const d=(Math.random()*6).toFixed(2), dur=(3+Math.random()*4).toFixed(2), op=(0.5+Math.random()*0.5).toFixed(2);
+      const st=`left:${x}%;width:${sz}px;height:${sz}px;--o:${op};animation-delay:${d}s;animation-duration:${dur}s`;
+      html+=`<span class="star" style="${st};top:${y}%"></span>`;
+      html+=`<span class="star" style="${st};top:${(+y+50).toFixed(2)}%"></span>`;
+    }
+    layer.innerHTML=html;
+    wrap.appendChild(layer);
+  });
+  wrap.dataset.built='1';
+}
 
 function applyAppearance(){
   const ap=state.appearance||{};
-  const theme=THEMES[ap.theme]||THEMES.default;
+  const themeKey=ap.theme||'default';
+  const base=THEMES[themeKey]||THEMES.default;
+  const vars=(themeKey==='custom')?customThemeVars(ap.themeColor||'#7C83E8'):base.vars;
   const root=document.documentElement;
-  Object.entries(theme.vars).forEach(([k,v])=>root.style.setProperty(k,v));
+  Object.entries(vars).forEach(([k,v])=>root.style.setProperty(k,v));
   Object.values(THEMES).forEach(t=>{ if(t.body) document.body.classList.remove(t.body); });
-  if(theme.body) document.body.classList.add(theme.body);
+  if(base.body) document.body.classList.add(base.body);
   if(ap.accent){ root.style.setProperty('--accent',ap.accent);
     root.style.setProperty('--accent-dim',darken(ap.accent,22)); }
   if(ap.hit) root.style.setProperty('--hit',ap.hit);
   const wm=document.getElementById('wordmark'); if(wm) wm.textContent=ap.name||'Ledger';
-  const accent=ap.accent||theme.vars['--accent'], bg=theme.vars['--bg'];
+  const accent=ap.accent||vars['--accent'], bg=vars['--bg'];
+  buildStars();
   buildIcon(accent,bg);
   const tc=document.querySelector('meta[name=theme-color]'); if(tc) tc.setAttribute('content',bg);
 }
@@ -1640,52 +1685,88 @@ function buildIcon(accent,bg){
 
 function openAppearance(){
   const ap=state.appearance||{};
-  const curAccent=ap.accent||(THEMES[ap.theme]||THEMES.default).vars['--accent'];
-  const {h,s,l}=hexToHsl(curAccent);
+  const themeKey=ap.theme||'default';
+  const themeVars=(themeKey==='custom')?customThemeVars(ap.themeColor||'#7C83E8'):(THEMES[themeKey]||THEMES.default).vars;
+  const curAccent=ap.accent||themeVars['--accent'];
+  const a=hexToHsl(curAccent);
+  const accentCustom=!!ap.accentCustom;
   const swatches=COLOR_PRESETS.map(p=>`
     <button class="swatch ${(ap.accent||'').toLowerCase()===p.accent.toLowerCase()?'on':''}"
       data-preset="${esc(p.accent)}" data-hit="${esc(p.hit||'')}" title="${esc(p.name)}"
       style="background:${p.accent}"></button>`).join('');
+  const accentHud=accentCustom?`
+    <div class="hud">
+      <div class="hud-prev" id="hudPrev" style="background:${curAccent};box-shadow:0 0 20px -2px ${curAccent}"></div>
+      <div class="hud-sliders">
+        <label class="hud-row"><span>HUE</span><input type="range" min="0" max="360" value="${a.h}" id="slH"></label>
+        <label class="hud-row"><span>SAT</span><input type="range" min="0" max="100" value="${a.s}" id="slS"></label>
+        <label class="hud-row"><span>LUM</span><input type="range" min="20" max="80" value="${a.l}" id="slL"></label>
+      </div>
+    </div>`:'';
   const themeRows=Object.keys(THEMES).map(k=>`
-    <button class="menu-item ${((ap.theme||'default')===k)?'chosen':''}" data-theme="${k}">
-      ${esc(THEMES[k].name)}${(ap.theme||'default')===k?' ✓':''}</button>`).join('');
+    <button class="menu-item ${(themeKey===k)?'chosen':''}" data-theme="${k}">
+      ${esc(THEMES[k].name)}${themeKey===k?' ✓':''}</button>`).join('');
+  const tcol=ap.themeColor||'#7C83E8', tc=hexToHsl(tcol);
+  const themeHud=(themeKey==='custom')?`
+    <div class="hud">
+      <div class="hud-prev" id="thPrev" style="background:${tcol};box-shadow:0 0 20px -2px ${tcol}"></div>
+      <div class="hud-sliders">
+        <label class="hud-row"><span>HUE</span><input type="range" min="0" max="360" value="${tc.h}" id="tlH"></label>
+        <label class="hud-row"><span>SAT</span><input type="range" min="20" max="100" value="${tc.s}" id="tlS"></label>
+        <label class="hud-row"><span>LUM</span><input type="range" min="30" max="75" value="${tc.l}" id="tlL"></label>
+      </div>
+    </div>`:'';
   openSheet('Appearance',`
     <button class="backrow" data-back="1">‹ Options</button>
     <div class="chartlbl">Accent color</div>
     <div class="swatches">${swatches}</div>
-    <div class="hud">
-      <div class="hud-prev" id="hudPrev" style="background:${curAccent};box-shadow:0 0 20px -2px ${curAccent}"></div>
-      <div class="hud-sliders">
-        <label class="hud-row"><span>HUE</span><input type="range" min="0" max="360" value="${h}" id="slH"></label>
-        <label class="hud-row"><span>SAT</span><input type="range" min="0" max="100" value="${s}" id="slS"></label>
-        <label class="hud-row"><span>LUM</span><input type="range" min="20" max="80" value="${l}" id="slL"></label>
-      </div>
-    </div>
-    <button class="menu-item" data-clearaccent="1">Reset accent to theme default</button>
+    <button class="menu-item ${accentCustom?'chosen':''}" data-accentcustom="1">Custom accent color${accentCustom?' ✓':''}</button>
+    ${accentHud}
+    ${(ap.accent||accentCustom)?`<button class="menu-item" data-clearaccent="1">Reset accent to theme default</button>`:''}
     <div class="chartlbl" style="margin-top:16px">Theme</div>
     ${themeRows}
+    ${themeHud}
     <div class="chartlbl" style="margin-top:16px">Name</div>
     <button class="menu-item" data-rename-app="1">Rename the app — currently "${esc(ap.name||'Ledger')}"</button>
-    <div class="note">Colors and theme apply instantly. Your Home Screen icon takes the new color the next time you remove and re-add the app — iOS only reads the icon at that moment.</div>`);
-  const applyLive=hex=>{
+    <div class="note">Presets apply instantly; mark Custom to expand the sliders. Selecting the Custom theme lets you tint the whole app from one color. The Home Screen icon takes the new color the next time you remove and re-add the app.</div>`);
+  const slH=document.getElementById('slH'),slS=document.getElementById('slS'),slL=document.getElementById('slL');
+  const liveAccent=hex=>{
     document.documentElement.style.setProperty('--accent',hex);
     document.documentElement.style.setProperty('--accent-dim',darken(hex,22));
     const pv=document.getElementById('hudPrev'); if(pv){ pv.style.background=hex; pv.style.boxShadow='0 0 20px -2px '+hex; }
   };
-  const slH=document.getElementById('slH'),slS=document.getElementById('slS'),slL=document.getElementById('slL');
-  const onSlide=()=>{ const hex=hslToHex(+slH.value,+slS.value,+slL.value);
-    if(!state.appearance) state.appearance={}; state.appearance.accent=hex; applyLive(hex); };
-  [slH,slS,slL].forEach(sl=>{ if(sl){ sl.oninput=onSlide; sl.onchange=()=>{ onSlide(); applyAppearance(); saveNow(); }; }});
+  const onAccent=()=>{ const hex=hslToHex(+slH.value,+slS.value,+slL.value);
+    if(!state.appearance) state.appearance={}; state.appearance.accent=hex; liveAccent(hex); };
+  [slH,slS,slL].forEach(sl=>{ if(sl){ sl.oninput=onAccent; sl.onchange=()=>{ onAccent(); applyAppearance(); saveNow(); }; }});
+  const tlH=document.getElementById('tlH'),tlS=document.getElementById('tlS'),tlL=document.getElementById('tlL');
+  const liveTheme=hex=>{
+    const v=customThemeVars(hex), root=document.documentElement;
+    Object.entries(v).forEach(([k,val])=>root.style.setProperty(k,val));
+    if(state.appearance&&state.appearance.accent){ root.style.setProperty('--accent',state.appearance.accent);
+      root.style.setProperty('--accent-dim',darken(state.appearance.accent,22)); }
+    const pv=document.getElementById('thPrev'); if(pv){ pv.style.background=hex; pv.style.boxShadow='0 0 20px -2px '+hex; }
+  };
+  const onTheme=()=>{ const hex=hslToHex(+tlH.value,+tlS.value,+tlL.value);
+    if(!state.appearance) state.appearance={}; state.appearance.themeColor=hex; liveTheme(hex); };
+  [tlH,tlS,tlL].forEach(sl=>{ if(sl){ sl.oninput=onTheme; sl.onchange=()=>{ onTheme(); applyAppearance(); saveNow(); }; }});
   $('#sheetBody').onclick=ev=>{
     if(!state.appearance) state.appearance={};
     const bk=ev.target.closest('[data-back]'); if(bk){ openOptions(); return; }
     const sw=ev.target.closest('[data-preset]');
     if(sw){ state.appearance.accent=sw.dataset.preset; state.appearance.hit=sw.dataset.hit||'';
+      state.appearance.accentCustom=false; applyAppearance(); saveNow(); openAppearance(); return; }
+    const acu=ev.target.closest('[data-accentcustom]');
+    if(acu){ state.appearance.accentCustom=!state.appearance.accentCustom;
+      if(state.appearance.accentCustom&&!state.appearance.accent) state.appearance.accent=curAccent;
       applyAppearance(); saveNow(); openAppearance(); return; }
     const ca=ev.target.closest('[data-clearaccent]');
-    if(ca){ state.appearance.accent=''; state.appearance.hit=''; applyAppearance(); saveNow(); openAppearance(); return; }
+    if(ca){ state.appearance.accent=''; state.appearance.hit=''; state.appearance.accentCustom=false;
+      applyAppearance(); saveNow(); openAppearance(); return; }
     const th=ev.target.closest('[data-theme]');
-    if(th){ state.appearance.theme=th.dataset.theme; applyAppearance(); saveNow(); openAppearance(); return; }
+    if(th){ state.appearance.theme=th.dataset.theme;
+      if(th.dataset.theme==='custom'&&!state.appearance.themeColor) state.appearance.themeColor='#7C83E8';
+      if(th.dataset.theme==='nintendo'){ state.appearance.accent=''; state.appearance.hit=''; state.appearance.accentCustom=false; }
+      applyAppearance(); saveNow(); openAppearance(); return; }
     const rn=ev.target.closest('[data-rename-app]');
     if(rn){ askText('App name',state.appearance.name||'Ledger','Shows in the header. Keep it short.').then(v=>{
       if(v===null) return; state.appearance.name=String(v).slice(0,16); applyAppearance(); saveNow(); openAppearance(); }); return; }
