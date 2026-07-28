@@ -20,6 +20,7 @@
   --accent:#6E9EC4; --accent-dim:#3B5A72;
   --hit:#9CBF6E; --deload:#C9A227;
   --radius:10px; --pad:16px;
+  --header-bg:rgba(14,17,19,.92); --scrim:rgba(8,10,11,.75);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);}
@@ -30,12 +31,12 @@ button{font-family:inherit;color:inherit;background:none;border:none;padding:0;c
 input{font-family:inherit;color:inherit;background:none;border:none;outline:none;}
 input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
-header{position:sticky;top:0;z-index:20;background:rgba(14,17,19,.92);
+header{position:sticky;top:0;z-index:20;background:var(--header-bg);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   border-bottom:1px solid var(--line-soft);
   padding:calc(env(safe-area-inset-top) + 12px) var(--pad) 0;}
 .brand{display:flex;align-items:center;gap:10px;padding-bottom:12px;}
-.mark{width:22px;height:22px;flex:none;}
+.mark{width:27px;height:27px;flex:none;}
 .wordmark{font-family:'Barlow Semi Condensed',sans-serif;font-size:17px;font-weight:600;
   letter-spacing:.16em;text-transform:uppercase;}
 .brand .spacer{flex:1;}
@@ -125,7 +126,7 @@ body.deloadWk .field input::placeholder{color:#6B5A22;}
   padding:13px;color:var(--muted);font-size:13.5px;}
 .add-ex:active{background:var(--surface);}
 
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(14,17,19,.94);
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--header-bg);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);
   padding:12px var(--pad) calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;}
 .bar .prog{flex:1;font-family:'Barlow Semi Condensed',sans-serif;font-size:13px;
@@ -133,10 +134,10 @@ body.deloadWk .field input::placeholder{color:#6B5A22;}
 .bar .prog span{color:var(--text);}
 .primary{background:var(--accent);color:#0E1113;font-weight:600;font-size:14px;
   border-radius:8px;padding:12px 20px;}
-.primary:active{background:#5A88AD;}
+.primary:active{background:var(--accent-dim);}
 .ghost{border:1px solid var(--line);border-radius:8px;padding:12px 16px;font-size:14px;color:var(--muted);}
 
-.sheet{position:fixed;inset:0;z-index:50;background:rgba(8,10,11,.72);
+.sheet{position:fixed;inset:0;z-index:50;background:var(--scrim);
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;}
 .sheet[hidden]{display:none;}
 .sheet-inner{width:100%;max-height:84vh;overflow-y:auto;background:var(--surface);
@@ -206,7 +207,7 @@ body.deloadWk .field input::placeholder{color:#6B5A22;}
 .cardio-form .field{flex:1;}
 .cardio-log{width:100%;background:var(--accent);color:#0E1113;font-weight:600;font-size:14px;
   border-radius:8px;padding:12px;margin-bottom:14px;}
-.cardio-log:active{background:#5A88AD;}
+.cardio-log:active{background:var(--accent-dim);}
 .cardio-count{display:flex;align-items:baseline;gap:8px;margin:0 0 14px;}
 .cardio-count .big{font-family:'Barlow Semi Condensed',sans-serif;font-size:24px;
   font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;}
@@ -238,7 +239,7 @@ body.deloadWk .field input::placeholder{color:#6B5A22;}
 .newbtn{display:block;width:100%;text-align:left;padding:13px 2px;font-size:14.5px;
   color:var(--accent);border-bottom:1px solid var(--line-soft);}
 
-.modal{position:fixed;inset:0;z-index:70;background:rgba(8,10,11,.8);
+.modal{position:fixed;inset:0;z-index:70;background:var(--scrim);
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   display:flex;align-items:center;justify-content:center;padding:24px;}
 .modal-box{width:100%;max-width:340px;background:var(--surface);
@@ -300,10 +301,42 @@ body.theme-nintendo .chk,body.theme-nintendo .cchip,body.theme-nintendo .swatch,
 body.theme-nintendo .pill,body.theme-nintendo .tgt,body.theme-nintendo .cardio-log{border-radius:14px;}
 body.theme-nintendo .wordmark{letter-spacing:.1em;}
 body.theme-nintendo .session-title{letter-spacing:.02em;}
+/* --- GamerTool starfield --- */
+main{position:relative;z-index:1;}
+#stars{display:none;position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+body.theme-gamertool #stars{display:block;}
+#stars::before,#stars::after{content:"";position:absolute;inset:0;}
+#stars::before{
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 40px,#dfe6ee,transparent),
+    radial-gradient(1.6px 1.6px at 130px 110px,#c3ccd8,transparent),
+    radial-gradient(1.4px 1.4px at 210px 60px,#ffffff,transparent),
+    radial-gradient(1.5px 1.5px at 80px 190px,#b9c6df,transparent),
+    radial-gradient(1.7px 1.7px at 260px 230px,#e7eef6,transparent),
+    radial-gradient(1.3px 1.3px at 40px 300px,#cdd6e2,transparent),
+    radial-gradient(1.5px 1.5px at 180px 330px,#ffffff,transparent),
+    radial-gradient(1.4px 1.4px at 300px 150px,#aebbd2,transparent);
+  background-size:340px 380px;background-repeat:repeat;opacity:.85;
+  animation:drift1 90s linear infinite;}
+#stars::after{
+  background-image:
+    radial-gradient(1px 1px at 60px 70px,#9fb0c8,transparent),
+    radial-gradient(1px 1px at 150px 30px,#c7d2e2,transparent),
+    radial-gradient(1px 1px at 230px 180px,#8fa0bd,transparent),
+    radial-gradient(1px 1px at 20px 220px,#b6c2d8,transparent),
+    radial-gradient(1px 1px at 190px 260px,#9fb0c8,transparent),
+    radial-gradient(1px 1px at 110px 140px,#d6deeb,transparent);
+  background-size:260px 300px;background-repeat:repeat;opacity:.5;
+  animation:drift2 150s linear infinite;}
+@keyframes drift1{from{background-position:0 0;}to{background-position:0 -380px;}}
+@keyframes drift2{from{background-position:0 0;}to{background-position:0 -300px;}}
+body.theme-gamertool .wordmark{letter-spacing:.14em;}
+@media (prefers-reduced-motion:reduce){#stars::before,#stars::after{animation:none;}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style>
 </head>
 <body>
+<div id="stars" aria-hidden="true"></div>
 
 <header>
   <div class="brand">
@@ -504,7 +537,7 @@ function weekIndex(d=new Date()){
   return Math.round((w-a)/604800000);
 }
 const phaseOf=(d=new Date())=>((weekIndex(d)%3)+3)%3;   // 0,1 = load · 2 = deload
-const isDeloadWeek=(d=new Date())=>phaseOf(d)===2;
+const isDeloadWeek=(d=new Date())=>!(state&&state.deloadPaused)&&phaseOf(d)===2;
 
 /* ================= model ================= */
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -572,13 +605,21 @@ const roundTo=(v,s)=>Math.round(v/s)*s;
 /*  Double progression, applied per set:
     reps at or above the top of the range  -> add weight, reps back to the bottom
     reps inside the range                  -> hold weight, add one rep
-    reps under the bottom                  -> pull weight back ~10%, reps to the bottom   */
+    reps under the bottom                  -> pull weight back ~10%, reps to the bottom
+    Integrity guard: when adding load, the increase is anchored to the heavier of
+    the standing goal and what was actually lifted, so one stray light-but-high-rep
+    entry can never quietly lower your working weight. */
 function nextGoal(prev,actual,lo,hi){
   const aw=parseFloat(actual.w), ar=parseInt(actual.r,10);
   if(isNaN(aw)||isNaN(ar)) return prev;
-  const s=stepFor(aw);
-  if(ar>=hi) return {w:roundTo(aw+s,s), r:lo};
+  const pw=(prev&&prev.w!=null&&prev.w!=='')?parseFloat(prev.w):NaN;
+  if(ar>=hi){
+    const base=isNaN(pw)?aw:Math.max(aw,pw);
+    const s=stepFor(base);
+    return {w:roundTo(base+s,s), r:lo};
+  }
   if(ar>=lo) return {w:aw, r:Math.min(ar+1,hi)};
+  const s=stepFor(aw);
   return {w:Math.max(roundTo(aw*0.9,s),s), r:lo};
 }
 function deloadOf(g,hi){
@@ -710,6 +751,7 @@ function goalPreview(rec){
 
 /* ================= helpers ================= */
 const $=s=>document.querySelector(s);
+const cssVar=n=>{const v=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return v||'#6E9EC4';};
 const day=()=>state.days[state.cycle];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=v=>{const n=parseFloat(v);return isNaN(n)?'':(n%1?n.toFixed(1):String(n));};
@@ -766,8 +808,15 @@ function renderCycle(){
     </button>`).join('');
 }
 function renderPhase(){
-  const p=phaseOf(), dl=p===2;
   const el=$('#phase');
+  if(state.deloadPaused){
+    el.className='phase';
+    el.innerHTML=`
+      <span class="pill">Deload paused</span>
+      <span>logging straight through — push every week</span>`;
+    return;
+  }
+  const p=phaseOf(), dl=p===2;
   el.className='phase'+(dl?' isDeload':'');
   el.innerHTML=`
     <span class="pill">${dl?'Deload week':'Load week '+(p+1)+' of 2'}</span>
@@ -1423,8 +1472,8 @@ function openTrend(name){
       <div class="stat"><span class="k">Best set</span><span class="v data">${best!=null?num(best)+' lb':'—'}</span></div>
       <div class="stat"><span class="k">Since first</span><span class="v data ${delta>0?'up':''}">${delta==null?'—':(delta>0?'+':'')+num(delta)+' lb'}</span></div>
     </div>
-    ${wp.length>1?`<div class="chartlbl">Top set weight</div>${sparkline(wp,'#6E9EC4')}`:''}
-    ${vp.length>1?`<div class="chartlbl">Volume per session</div>${sparkline(vp,'#9CBF6E')}`:''}
+    ${wp.length>1?`<div class="chartlbl">Top set weight</div>${sparkline(wp,cssVar('--accent'))}`:''}
+    ${vp.length>1?`<div class="chartlbl">Volume per session</div>${sparkline(vp,cssVar('--hit'))}`:''}
     ${wp.length<2&&vp.length<2?`<div class="note">Log this lift a couple more times and the trend lines will fill in.</div>`:''}
     <div class="chartlbl">Recent sessions</div>
     <div class="tlist">${rows}</div>
@@ -1513,7 +1562,8 @@ const DEFAULT_VARS={
   '--line':'#2A3135','--line-soft':'#20272A',
   '--text':'#EDEFEF','--muted':'#8B9599','--dim':'#5F686C',
   '--accent':'#6E9EC4','--accent-dim':'#3B5A72',
-  '--hit':'#9CBF6E','--deload':'#C9A227','--radius':'10px'
+  '--hit':'#9CBF6E','--deload':'#C9A227','--radius':'10px',
+  '--header-bg':'rgba(14,17,19,.92)','--scrim':'rgba(8,10,11,.75)'
 };
 const THEMES={
   default:{ name:'Default (Slate)', body:'', vars:DEFAULT_VARS },
@@ -1522,7 +1572,16 @@ const THEMES={
     '--line':'#767C83','--line-soft':'#5B6067',
     '--text':'#F5F5F2','--muted':'#CBCFD4','--dim':'#9BA1A9',
     '--accent':'#E60012','--accent-dim':'#8E1B1B',
-    '--hit':'#3BA935','--deload':'#F5C518','--radius':'20px'
+    '--hit':'#3BA935','--deload':'#F5C518','--radius':'20px',
+    '--header-bg':'rgba(69,72,77,.94)','--scrim':'rgba(30,32,34,.75)'
+  }},
+  gamertool:{ name:'GamerTool (Starfield)', body:'theme-gamertool', vars:{
+    '--bg':'#080A12','--surface':'#141826','--surface-2':'#1C2233',
+    '--line':'#2B3145','--line-soft':'#20263a',
+    '--text':'#C7CCD4','--muted':'#8891A0','--dim':'#5C6474',
+    '--accent':'#7C83E8','--accent-dim':'#3C4288',
+    '--hit':'#79C7A0','--deload':'#D9B84C','--radius':'12px',
+    '--header-bg':'rgba(8,10,18,.86)','--scrim':'rgba(4,5,12,.80)'
   }}
 };
 const COLOR_PRESETS=[
@@ -1550,7 +1609,7 @@ function applyAppearance(){
   const theme=THEMES[ap.theme]||THEMES.default;
   const root=document.documentElement;
   Object.entries(theme.vars).forEach(([k,v])=>root.style.setProperty(k,v));
-  document.body.classList.remove('theme-nintendo');
+  Object.values(THEMES).forEach(t=>{ if(t.body) document.body.classList.remove(t.body); });
   if(theme.body) document.body.classList.add(theme.body);
   if(ap.accent){ root.style.setProperty('--accent',ap.accent);
     root.style.setProperty('--accent-dim',darken(ap.accent,22)); }
@@ -1650,9 +1709,11 @@ function openOptions(){
   };
 }
 function openWorkoutMenu(){
+  const paused=!!state.deloadPaused;
   openSheet('Workout & program',`
     <button class="backrow" data-back="1">‹ Options</button>
     <button class="menu-item" data-act="library">Exercise library</button>
+    <button class="menu-item" data-act="deload">Deload cycle: <b style="color:${paused?'var(--deload)':'var(--hit)'}">${paused?'Paused':'On'}</b> — tap to ${paused?'resume':'pause'}</button>
     <button class="menu-item" data-act="rename">Rename this day</button>
     <button class="menu-item" data-act="addday">Add a day to the rotation</button>
     <button class="menu-item" data-act="delday">Remove this day</button>
@@ -1660,6 +1721,12 @@ function openWorkoutMenu(){
   $('#sheetBody').onclick=ev=>{
     const bk=ev.target.closest('[data-back]'); if(bk){ openOptions(); return; }
     const b=ev.target.closest('[data-act]'); if(!b) return;
+    if(b.dataset.act==='deload'){
+      state.deloadPaused=!state.deloadPaused;
+      render(); saveNow(); openWorkoutMenu();
+      toast(state.deloadPaused?'Deload paused — every week counts as a load week':'Deload cycle back on');
+      return;
+    }
     workoutAction(b.dataset.act);
   };
 }
